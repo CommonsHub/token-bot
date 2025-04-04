@@ -100,16 +100,9 @@ const getCommands = () =>
     },
     {
       name: "mint",
-      description: "Mint a token for someone! 🔨",
+      description: "Mint a Commons Hub Token for someone! 🔨",
       default_member_permissions: "32",
       options: [
-        {
-          name: "token",
-          description: "The token to mint",
-          type: 3, // STRING type
-          required: true,
-          autocomplete: true,
-        },
         {
           name: "user",
           description: "The recipient's @username or 0x address",
@@ -135,13 +128,6 @@ const getCommands = () =>
       description: "Burn a token from someone! 🔥",
       default_member_permissions: "32",
       options: [
-        {
-          name: "token",
-          description: "The token to burn",
-          type: 3, // STRING type
-          required: true,
-          autocomplete: true,
-        },
         {
           name: "user",
           description: "The recipient's @username or 0x address",
@@ -223,7 +209,7 @@ const getCommands = () =>
     },
     {
       name: "add-owner",
-      description: "Add an owner to your Safe! 🔑",
+      description: "Add an owner to your wallet 🔑",
       options: [
         {
           name: "owner",
