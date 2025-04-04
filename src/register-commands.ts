@@ -4,6 +4,18 @@ import "dotenv/config";
 const getCommands = () =>
   [
     {
+      name: "do",
+      description: "Ask me to do something! 🤖",
+      options: [
+        {
+          name: "task",
+          description: "The task to do",
+          type: 3, // STRING type
+          required: true,
+        },
+      ],
+    },
+    {
       name: "signup",
       description: "Request access for your server.",
       default_member_permissions: "32",
@@ -147,6 +159,65 @@ const getCommands = () =>
           description: "The message to include",
           type: 3, // STRING type
           required: false,
+        },
+      ],
+    },
+    {
+      name: "burn-many",
+      description: "Burn a token from many users at once! 🔥",
+      default_member_permissions: "32",
+      options: [
+        {
+          name: "token",
+          description: "The token to burn",
+          type: 3, // STRING type
+          required: true,
+          autocomplete: true,
+        },
+        {
+          name: "users",
+          description:
+            "The list of @username or 0x address whose tokens get burnt",
+          type: 3, // STRING type
+          required: true,
+        },
+        {
+          name: "amount",
+          description: "The amount to burn",
+          type: 10, // NUMBER type
+          required: true,
+        },
+        {
+          name: "message",
+          description: "The message to include",
+          type: 3, // STRING type
+          required: false,
+        },
+      ],
+    },
+    {
+      name: "burn-or-revoke-role",
+      description: "Burn tokens or revoke role if not enough!",
+      default_member_permissions: "32",
+      options: [
+        {
+          name: "token",
+          description: "The token of debts",
+          type: 3, // STRING type
+          required: true,
+          autocomplete: true,
+        },
+        {
+          name: "amount",
+          description: "The amount to burn",
+          type: 10, // NUMBER type
+          required: true,
+        },
+        {
+          name: "role",
+          description: "The role to revoke if user has not burnt enough tokens",
+          type: 8, // ROLE type
+          required: true,
         },
       ],
     },

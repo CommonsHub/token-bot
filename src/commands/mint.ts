@@ -1,23 +1,12 @@
-import {
-  BundlerService,
-  getAccountAddress,
-  getCardAddress,
-  getENSAddress,
-  getProfileFromAddress,
-  type ProfileWithTokenId,
-} from "@citizenwallet/sdk";
+import { BundlerService, getAccountAddress } from "@citizenwallet/sdk";
 import { ChatInputCommandInteraction, Client } from "discord.js";
-import { keccak256, toUtf8Bytes } from "ethers";
-import {
-  cleanUserId,
-  createDiscordMention,
-  isDiscordMention,
-  isDomainName,
-} from "../utils/address";
 import { Wallet } from "ethers";
 import { getCommunity } from "../cw";
-import { createProgressSteps } from "../utils/progress";
+import { createDiscordMention } from "../utils/address";
 import { ContentResponse, generateContent } from "../utils/content";
+import { createProgressSteps } from "../utils/progress";
+import { getAddressFromUserInputWithReplies } from "./conversion/address";
+import { MintTaskArgs } from "./do/tasks";
 
 export const handleMintCommand = async (
   client: Client,
@@ -48,11 +37,25 @@ export const handleMintCommand = async (
 
   const message = interaction.options.getString("message");
 
+  await mintCommand(client, interaction, {
+    name: "mint",
+    alias,
+    users: users.split(","),
+    amount,
+    message,
+  });
+};
+
+export const mintCommand = async (
+  client: Client,
+  interaction: ChatInputCommandInteraction,
+  mintTaskArgs: MintTaskArgs
+) => {
+  const { alias, users, amount, message } = mintTaskArgs;
+
   const community = getCommunity(alias);
 
   const token = community.primaryToken;
-
-  const usersArray = users.split(",");
 
   const content: ContentResponse = {
     header: "",
@@ -61,94 +64,21 @@ export const handleMintCommand = async (
 
   let userIndex = 0;
 
-  for (let user of usersArray) {
+  for (let user of users) {
     user = user.trim();
 
-    let receiverAddress: string = user;
-    let profile: ProfileWithTokenId | null = null;
-    let receiverUserId: string | null = null;
-    if (isDiscordMention(user)) {
-      receiverAddress = user.replace(/<|>/g, "");
-
-      const userId = cleanUserId(user);
-      if (!userId) {
-        content.content.push("Invalid user id");
-        await interaction.editReply({
-          content: generateContent(content),
-        });
-        continue;
-      }
-
-      const receiverHashedUserId = keccak256(toUtf8Bytes(userId));
-
-      const receiverCardAddress = await getCardAddress(
-        community,
-        receiverHashedUserId
-      );
-      if (!receiverCardAddress) {
-        content.content.push("Could not find an account to send to!");
-        await interaction.editReply({
-          content: generateContent(content),
-        });
-        continue;
-      }
-
-      receiverAddress = receiverCardAddress;
-      receiverUserId = userId;
-    } else if (isDomainName(user)) {
-      const domain = user;
-
-      const mainnnetRpcUrl = process.env.MAINNET_RPC_URL;
-      if (!mainnnetRpcUrl) {
-        content.content.push("Mainnet RPC URL is not set");
-        await interaction.editReply({
-          content: generateContent(content),
-        });
-        continue;
-      }
-
-      const ensAddress = await getENSAddress(mainnnetRpcUrl, domain);
-      if (!ensAddress) {
-        content.content.push("Could not find an ENS name for the domain");
-        await interaction.editReply({
-          content: generateContent(content),
-        });
-        continue;
-      }
-
-      receiverAddress = ensAddress;
-    } else {
-      // Check if receiverAddress is a valid Ethereum address
-      if (!/^0x[a-fA-F0-9]{40}$/.test(receiverAddress)) {
-        content.content.push(
-          "Invalid format: it's either a discord mention or an Ethereum address"
-        );
-        await interaction.editReply({
-          content: generateContent(content),
-        });
-        continue;
-      }
-
-      const ipfsDomain = process.env.IPFS_DOMAIN;
-      if (!ipfsDomain) {
-        content.content.push("Could not find an IPFS domain!");
-        await interaction.editReply({
-          content: generateContent(content),
-        });
-        continue;
-      }
-
-      profile = await getProfileFromAddress(
-        ipfsDomain,
-        community,
-        receiverAddress
-      );
-    }
-
-    content.header = createProgressSteps(
-      1,
-      `${userIndex + 1}/${usersArray.length}`
+    const {
+      address: receiverAddress,
+      userId: receiverUserId,
+      profile,
+    } = await getAddressFromUserInputWithReplies(
+      user,
+      community,
+      content,
+      interaction
     );
+
+    content.header = createProgressSteps(1, `${userIndex + 1}/${users.length}`);
     await interaction.editReply({
       content: generateContent(content),
     });
@@ -176,10 +106,7 @@ export const handleMintCommand = async (
       continue;
     }
 
-    content.header = createProgressSteps(
-      2,
-      `${userIndex + 1}/${usersArray.length}`
-    );
+    content.header = createProgressSteps(2, `${userIndex + 1}/${users.length}`);
     await interaction.editReply({
       content: generateContent(content),
     });
@@ -198,7 +125,7 @@ export const handleMintCommand = async (
 
       content.header = createProgressSteps(
         3,
-        `${userIndex + 1}/${usersArray.length}`
+        `${userIndex + 1}/${users.length}`
       );
       await interaction.editReply({
         content: generateContent(content),
@@ -228,7 +155,7 @@ export const handleMintCommand = async (
         }
       }
 
-      content.header = `✅ Minted ${userIndex + 1}/${usersArray.length}`;
+      content.header = `✅ Minted ${userIndex + 1}/${users.length}`;
       content.content.push(
         `**${amount} ${token.symbol}** to ${
           profile?.name ?? profile?.username ?? user
