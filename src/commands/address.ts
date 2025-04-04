@@ -38,7 +38,7 @@ export const addressCommand = async (
     content: [],
   };
   for (const alias of addressTaskArgs.alias) {
-    const community = getCommunity(alias);
+    const community = getCommunity(process.env.COMMUNITY_SLUG);
 
     content.header = `⚙️ Fetching address for ${community.community.name}...`;
     await interaction.editReply({

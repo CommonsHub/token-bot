@@ -10,15 +10,9 @@ export const handleShowBalanceCommand = async (
 ) => {
   await interaction.reply({ content: "⚙️ Fetching..." });
 
-  const alias = interaction.options.getString("token");
-  if (!alias) {
-    await interaction.editReply("You need to specify a token!");
-    return;
-  }
-
   await shareBalanceCommand(interaction, {
     name: "shareBalance",
-    alias,
+    alias: process.env.COMMUNITY_SLUG,
   });
 };
 
@@ -26,7 +20,7 @@ export const shareBalanceCommand = async (
   interaction: ChatInputCommandInteraction,
   shareBalanceTaskArgs: ShareBalanceTaskArgs
 ) => {
-  const community = getCommunity(shareBalanceTaskArgs.alias);
+  const community = getCommunity(process.env.COMMUNITY_SLUG);
 
   const hashedUserId = keccak256(toUtf8Bytes(interaction.user.id));
 

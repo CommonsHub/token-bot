@@ -17,17 +17,13 @@ export const handleMintCommand = async (
     ephemeral: true,
   });
 
-  const alias = interaction.options.getString("token");
-  if (!alias) {
-    await interaction.editReply("You need to specify a token!");
-    return;
-  }
-
   const users = interaction.options.getString("user");
   if (!users) {
     await interaction.editReply("You need to specify a user!");
     return;
   }
+
+  console.log(">>> mint command users", users);
 
   const amount = interaction.options.getNumber("amount");
   if (!amount) {
@@ -39,8 +35,8 @@ export const handleMintCommand = async (
 
   await mintCommand(client, interaction, {
     name: "mint",
-    alias,
-    users: users.split(","),
+    alias: process.env.COMMUNITY_SLUG,
+    users: users.split(",").map((user) => user.trim()),
     amount,
     message,
   });
@@ -51,9 +47,9 @@ export const mintCommand = async (
   interaction: ChatInputCommandInteraction,
   mintTaskArgs: MintTaskArgs
 ) => {
-  const { alias, users, amount, message } = mintTaskArgs;
+  const { users, amount, message } = mintTaskArgs;
 
-  const community = getCommunity(alias);
+  const community = getCommunity(process.env.COMMUNITY_SLUG);
 
   const token = community.primaryToken;
 

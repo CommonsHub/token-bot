@@ -17,12 +17,6 @@ export const handleBurnCommand = async (
     ephemeral: true,
   });
 
-  const alias = interaction.options.getString("token");
-  if (!alias) {
-    await interaction.editReply("You need to specify a token!");
-    return;
-  }
-
   const user = interaction.options.getString("user");
   if (!user) {
     await interaction.editReply("You need to specify a user!");
@@ -43,7 +37,7 @@ export const handleBurnCommand = async (
 
   const message = interaction.options.getString("message");
 
-  const community = getCommunity(alias);
+  const community = getCommunity(process.env.COMMUNITY_SLUG);
 
   const token = community.primaryToken;
 
@@ -140,7 +134,7 @@ export const burnCommand = async (
   interaction: ChatInputCommandInteraction,
   burnTaskArgs: BurnTaskArgs
 ) => {
-  const community = getCommunity(burnTaskArgs.alias);
+  const community = getCommunity(process.env.COMMUNITY_SLUG);
   const user = burnTaskArgs.user;
   const amount = burnTaskArgs.amount;
   const message = burnTaskArgs.message;

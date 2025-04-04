@@ -39,7 +39,7 @@ export const balanceCommand = async (
   };
 
   for (const alias of balanceTaskArgs.alias) {
-    const community = getCommunity(alias);
+    const community = getCommunity(process.env.COMMUNITY_SLUG);
 
     content.header = `⚙️ Fetching balance for ${community.community.name}...`;
     await interaction.editReply({

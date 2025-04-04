@@ -16,12 +16,6 @@ export const handleBurnManyCommand = async (
     ephemeral: true,
   });
 
-  const alias = interaction.options.getString("token");
-  if (!alias) {
-    await interaction.editReply("You need to specify a token!");
-    return;
-  }
-
   const users = interaction.options.getString("users");
   if (!users) {
     await interaction.editReply("You need to specify a user!");
@@ -38,7 +32,7 @@ export const handleBurnManyCommand = async (
 
   const message = interaction.options.getString("message");
 
-  const community = getCommunity(alias);
+  const community = getCommunity(process.env.COMMUNITY_SLUG);
   const token = community.primaryToken;
 
   const privateKey = process.env.BOT_PRIVATE_KEY;

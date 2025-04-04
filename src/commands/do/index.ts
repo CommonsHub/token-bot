@@ -115,7 +115,7 @@ export const handleDoCommand = async (
     case "send": {
       const sendResponse = response as SendTaskArgs;
 
-      const community = getCommunity(sendResponse.alias);
+      const community = getCommunity(process.env.COMMUNITY_SLUG);
 
       let message = `🚀 Send **${sendResponse.amount}${
         community.primaryToken.symbol
@@ -145,7 +145,7 @@ export const handleDoCommand = async (
 
       const mintResponse = response as MintTaskArgs;
 
-      const community = getCommunity(mintResponse.alias);
+      const community = getCommunity(process.env.COMMUNITY_SLUG);
 
       let message = `🔨 Mint **${mintResponse.amount}${
         community.primaryToken.symbol
@@ -174,7 +174,7 @@ export const handleDoCommand = async (
 
       const burnResponse = response as BurnTaskArgs;
 
-      const community = getCommunity(burnResponse.alias);
+      const community = getCommunity(process.env.COMMUNITY_SLUG);
 
       let message = `🔥 Burn **${burnResponse.amount}${community.primaryToken.symbol}** from ${burnResponse.user}`;
       if (burnResponse.message) {

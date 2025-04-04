@@ -25,12 +25,6 @@ export const handleBurnOrRevokeRoleCommand = async (
     ephemeral: true,
   });
 
-  const alias = interaction.options.getString("token");
-  if (!alias) {
-    await interaction.editReply("You need to specify a token!");
-    return;
-  }
-
   const amount = interaction.options.getNumber("amount");
   if (!amount) {
     await interaction.editReply("You need to specify an amount!");
@@ -45,7 +39,7 @@ export const handleBurnOrRevokeRoleCommand = async (
 
   const message = interaction.options.getString("message");
 
-  const community = getCommunity(alias);
+  const community = getCommunity(process.env.COMMUNITY_SLUG);
   const token = community.primaryToken;
   const guild = await client.guilds.fetch(interaction.guildId);
 

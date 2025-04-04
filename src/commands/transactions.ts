@@ -9,13 +9,7 @@ export const handleTransactionsCommand = async (
 ) => {
   await interaction.reply({ content: "⚙️ Fetching...", ephemeral: true });
 
-  const alias = interaction.options.getString("token");
-  if (!alias) {
-    await interaction.editReply("You need to specify a token!");
-    return;
-  }
-
-  const community = getCommunity(alias);
+  const community = getCommunity(process.env.COMMUNITY_SLUG);
 
   const hashedUserId = keccak256(toUtf8Bytes(interaction.user.id));
 

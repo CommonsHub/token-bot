@@ -15,15 +15,9 @@ export const handleShareAddressCommand = async (
 ) => {
   await interaction.reply({ content: "⚙️ Fetching..." });
 
-  const alias = interaction.options.getString("token");
-  if (!alias) {
-    await interaction.editReply("You need to specify a token!");
-    return;
-  }
-
   await shareAddressCommand(interaction, {
     name: "showAddress",
-    alias,
+    alias: process.env.COMMUNITY_SLUG,
   });
 };
 
@@ -33,7 +27,7 @@ export const shareAddressCommand = async (
 ) => {
   const hashedUserId = keccak256(toUtf8Bytes(interaction.user.id));
 
-  const community = getCommunity(shareAddressTaskArgs.alias);
+  const community = getCommunity(process.env.COMMUNITY_SLUG);
 
   await interaction.editReply({
     content: `⚙️ Fetching balance for ${community.community.name}...`,

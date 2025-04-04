@@ -36,12 +36,6 @@ export const handleSendCommand = async (
     ephemeral: true,
   });
 
-  const alias = interaction.options.getString("token");
-  if (!alias) {
-    await interaction.editReply("You need to specify a token!");
-    return;
-  }
-
   const users = interaction.options.getString("user");
   if (!users) {
     await interaction.editReply("You need to specify a user!");
@@ -64,7 +58,7 @@ export const handleSendCommand = async (
 
   await sendCommand(client, interaction, {
     name: "send",
-    alias,
+    alias: process.env.COMMUNITY_SLUG,
     users: usersArray,
     amount,
     message,
@@ -82,7 +76,7 @@ export const sendCommand = async (
 
   const message = sendTaskArgs.message;
 
-  const community = getCommunity(sendTaskArgs.alias);
+  const community = getCommunity(process.env.COMMUNITY_SLUG);
 
   const token = community.primaryToken;
 

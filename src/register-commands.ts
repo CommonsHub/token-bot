@@ -27,15 +27,7 @@ const getCommands = () =>
     {
       name: "share-balance",
       description: "Shares your balance of a token to others 📣",
-      options: [
-        {
-          name: "token",
-          description: "The token to check",
-          type: 3, // STRING type
-          required: true,
-          autocomplete: true,
-        },
-      ],
+      options: [],
     },
     {
       name: "address",
@@ -44,40 +36,17 @@ const getCommands = () =>
     {
       name: "share-address",
       description: "Shares your address to others 📣",
-      options: [
-        {
-          name: "token",
-          description: "The token to check",
-          type: 3, // STRING type
-          required: true,
-          autocomplete: true,
-        },
-      ],
+      options: [],
     },
     {
       name: "transactions",
       description: "Reveals a link to your transactions privately! 🥷",
-      options: [
-        {
-          name: "token",
-          description: "The token to check",
-          type: 3, // STRING type
-          required: true,
-          autocomplete: true,
-        },
-      ],
+      options: [],
     },
     {
       name: "send",
       description: "Send a token to someone! 🚀",
       options: [
-        {
-          name: "token",
-          description: "The token to send",
-          type: 3, // STRING type
-          required: true,
-          autocomplete: true,
-        },
         {
           name: "user",
           description: "The recipient's @username or 0x address",
@@ -154,13 +123,6 @@ const getCommands = () =>
       default_member_permissions: "32",
       options: [
         {
-          name: "token",
-          description: "The token to burn",
-          type: 3, // STRING type
-          required: true,
-          autocomplete: true,
-        },
-        {
           name: "users",
           description:
             "The list of @username or 0x address whose tokens get burnt",
@@ -186,13 +148,6 @@ const getCommands = () =>
       description: "Burn tokens or revoke role if not enough!",
       default_member_permissions: "32",
       options: [
-        {
-          name: "token",
-          description: "The token of debts",
-          type: 3, // STRING type
-          required: true,
-          autocomplete: true,
-        },
         {
           name: "amount",
           description: "The amount to burn",
