@@ -44,12 +44,15 @@ export const burn = async (
   if (burnStatus.status === "burnt") {
     console.error(`${user} has already burned`);
   } else {
-    const balance = await getAccountBalance(community, cardAddress);
+    const balanceBigInt = await getAccountBalance(community, cardAddress);
+
+    const balance =
+      Number(balanceBigInt) / 10 ** community.primaryToken.decimals;
 
     if (burnStatus.remainingBurns > balance) {
       if (DRY_RUN) {
         console.log(
-          `DRYRUN: ${user} has not enough CHT, removing role ${roleSettings.id}.`
+          `DRYRUN: ${user.user.username} has not enough CHT, removing role ${roleSettings.id}.`
         );
       } else {
         await guild.members.removeRole({
@@ -57,7 +60,7 @@ export const burn = async (
           role: roleSettings.id,
         });
         console.log(
-          `${user} has not enough CHT, removed role ${roleSettings.id}.`
+          `${user.user.username} has not enough CHT, removed role ${roleSettings.id}.`
         );
       }
     } else {
@@ -68,7 +71,7 @@ export const burn = async (
           `DRYRUN: Burning ${burnStatus.remainingBurns.toString()} CHT for ${
             user.user.username
           } (balance: ${formatUnits(
-            balance,
+            balanceBigInt,
             community.primaryToken.decimals
           )})`,
           message
