@@ -7,7 +7,11 @@ import {
 } from "@citizenwallet/sdk";
 import { keccak256, toUtf8Bytes, Wallet, formatUnits } from "ethers";
 
-const DRY_RUN = true;
+import { Nostr, URI } from "../lib/nostr";
+
+const nostr = Nostr.getInstance();
+
+const DRY_RUN = ["test", "dev", "dryrun"].includes(process.env.ENV);
 
 export type DiscordRoleSettings = {
   id: string;
@@ -83,6 +87,13 @@ export const burn = async (
         );
         console.log(
           `Burnt ${burnStatus.remainingBurns.toString()} CHT for ${user}: ${hash}`
+        );
+        await nostr?.publishMetadata(
+          `ethereum:${community.primaryToken.chain_id}:tx:${hash}` as URI,
+          {
+            content: message,
+            tags: [["role", roleSettings.name]],
+          }
         );
       } catch (e) {
         console.error(

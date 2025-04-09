@@ -7,6 +7,9 @@ import { ContentResponse, generateContent } from "../utils/content";
 import { createProgressSteps } from "../utils/progress";
 import { getAddressFromUserInputWithReplies } from "./conversion/address";
 import { MintTaskArgs } from "./do/tasks";
+import { Nostr, URI } from "../lib/nostr";
+
+const nostr = Nostr.getInstance();
 
 export const handleMintCommand = async (
   client: Client,
@@ -117,6 +120,11 @@ export const mintCommand = async (
         receiverAddress,
         amount.toString(),
         message
+      );
+
+      await nostr?.publishMetadata(
+        `ethereum:${community.primaryToken.chain_id}:tx:${hash}` as URI,
+        { content: message, tags: [] }
       );
 
       content.header = createProgressSteps(
