@@ -4,8 +4,8 @@
             "name": "Commons Hub Brussels",
             "description": "Community Token for the Commons Hub Brussels community",
             "url": "https://commonshub.brussels",
-            "alias": process.env.COMMUNITY_SLUG,
-            "custom_domain": process.env.COMMUNITY_SLUG,
+            "alias": "wallet.commonshub.brussels",
+            "custom_domain": "wallet.commonshub.brussels",
             "logo": "https://wallet.commonshub.brussels/uploads/logo.svg",
             "theme": {
                 "primary": "#ff4c02"
