@@ -135,6 +135,7 @@ export const mintCommand = async (
 
       if (receiverUserId) {
         try {
+          console.log(">>> sending DM to", receiverUserId);
           const receiver = await client.users.fetch(receiverUserId);
 
           const dmChannel = await receiver.createDM();
@@ -165,6 +166,13 @@ export const mintCommand = async (
       await interaction.editReply({
         content: generateContent(content),
       });
+
+      nostr?.publishMetadata(
+        `ethereum:${community.primaryToken.chain_id}:tx:${hash}` as URI,
+        { content: message, tags: [] }
+      );
+
+      discordLog(`Minted ${amount} ${token.symbol} to ${user} for ${message}`);
     } catch (error) {
       console.error("Failed to mint", error);
       content.content.push("❌ Failed to mint");
@@ -172,13 +180,6 @@ export const mintCommand = async (
         content: generateContent(content),
       });
     }
-
-    nostr?.publishMetadata(
-      `ethereum:${community.primaryToken.chain_id}:tx:${hash}` as URI,
-      { content: message, tags: [] }
-    );
-
-    discordLog(`Minted ${amount} ${token.symbol} to ${user} for ${message}`);
 
     userIndex++;
   }
