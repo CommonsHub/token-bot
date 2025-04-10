@@ -26,6 +26,10 @@ import { createProgressSteps } from "../utils/progress";
 import { ContentResponse, generateContent } from "../utils/content";
 import { SendTaskArgs } from "./do/tasks";
 import { getAddressFromUserInputWithReplies } from "./conversion/address";
+import { discordLog } from "../lib/discord";
+import { Nostr, URI } from "../lib/nostr";
+
+const nostr = Nostr.getInstance();
 
 export const handleSendCommand = async (
   client: Client,
@@ -42,7 +46,7 @@ export const handleSendCommand = async (
     return;
   }
 
-  const usersArray = users.split(",");
+  const usersArray = users.match(/<@\d+>/g);
   if (usersArray.length === 0) {
     await interaction.editReply("You need to specify at least one user!");
     return;
@@ -251,6 +255,19 @@ export const sendCommand = async (
       await interaction.editReply({
         content: generateContent(content),
       });
+
+      nostr?.publishMetadata(
+        `ethereum:${community.primaryToken.chain_id}:tx:${hash}` as URI,
+        {
+          content: message,
+          tags: [],
+        }
+      );
+      discordLog(
+        `${createDiscordMention(interaction.user.id)} sent **${amount} ${
+          token.symbol
+        }** to ${user} ${message ? `for ${message}` : ""}`
+      );
     } catch (error) {
       console.error("Failed to send transaction", error);
       content.content.push("❌ Failed to send transaction");
