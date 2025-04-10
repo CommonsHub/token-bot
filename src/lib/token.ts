@@ -40,7 +40,7 @@ export const burn = async (
     return;
   }
   // check user status
-  const burnStatus = { status: "new", remainingBurns: roleSettings.burnAmount }; //await getBurnStatus(user, role);
+  const burnStatus = { status: "new", burntAmount: roleSettings.burnAmount }; //await getBurnStatus(user, role);
   const message = `Burning tokens for ${roleSettings.name} role`;
   if (burnStatus.status === "burnt") {
     console.error(`${user} has already burned`);
@@ -51,7 +51,7 @@ export const burn = async (
       Number(balanceBigInt) / 10 ** community.primaryToken.decimals;
 
     console.log(
-      `DRYRUN: Burning ${burnStatus.remainingBurns.toString()} CHT for ${
+      `DRYRUN: Burning ${burnStatus.burntAmount.toString()} CHT for ${
         user.user.username
       } (balance: ${formatUnits(
         balanceBigInt,
@@ -60,10 +60,10 @@ export const burn = async (
       message
     );
 
-    if (burnStatus.remainingBurns > balance) {
+    if (burnStatus.burntAmount > balance) {
       if (DRY_RUN) {
         console.log(
-          `DRYRUN: ${user.user.username} has not enough CHT, removing role ${roleSettings.id}.`
+          `DRYRUN: ${user.user.username} has not enough CHT, removing role ${roleSettings.name}.`
         );
       } else {
         await guild.members.removeRole({
@@ -71,7 +71,7 @@ export const burn = async (
           role: roleSettings.id,
         });
         console.log(
-          `${user.user.username} has not enough CHT, removed role ${roleSettings.id}.`
+          `${user.user.username} has not enough CHT, removed role ${roleSettings.name}.`
         );
       }
     } else {
@@ -87,11 +87,11 @@ export const burn = async (
           community.primaryToken.address,
           signerAccountAddress,
           cardAddress,
-          burnStatus.remainingBurns.toString(),
+          burnStatus.burntAmount.toString(),
           message
         );
         console.log(
-          `Burnt ${burnStatus.remainingBurns.toString()} CHT for ${
+          `Burnt ${burnStatus.burntAmount.toString()} CHT for ${
             user.user.username
           }: ${hash}`
         );
@@ -102,18 +102,98 @@ export const burn = async (
             tags: [["role", roleSettings.name]],
           }
         );
-        discordLog(
-          `Burned ${burnStatus.remainingBurns.toString()} CHT for <@${
+        await discordLog(
+          `Burned ${burnStatus.burntAmount.toString()} CHT for <@${
             user.user.id
-          }> for ${message}`
+          }> for ${roleSettings.name} role`
         );
       } catch (e) {
         console.error(
-          `Failed to burn ${burnStatus.remainingBurns.toString()} CHT for ${
+          `Failed to burn ${burnStatus.burntAmount.toString()} CHT for ${
             user.user.username
           } (${e.message})`
         );
       }
+    }
+  }
+};
+
+export const mint = async (
+  roleSettings: DiscordRoleSettings,
+  user: GuildMember,
+  community: CommunityConfig,
+  guild: Guild,
+  signer: Wallet,
+  signerAccountAddress: string
+) => {
+  const hashedUserId = keccak256(toUtf8Bytes(user.user.id));
+
+  const cardAddress = await getCardAddress(community, hashedUserId);
+  if (!cardAddress) {
+    console.error(
+      `Could not find an account to send to for user ${user.user.displayName}!`
+    );
+    return;
+  }
+  // check user status
+  const mintStatus = { status: "new", mintedAmount: roleSettings.mintAmount };
+  const message = `Minting tokens for ${roleSettings.name} role`;
+  if (mintStatus.status === "mint") {
+    console.error(`${user} has already minted`);
+  } else {
+    const balanceBigInt = await getAccountBalance(community, cardAddress);
+
+    const balance =
+      Number(balanceBigInt) / 10 ** community.primaryToken.decimals;
+
+    console.log(
+      `DRYRUN: Minting ${mintStatus.mintedAmount.toString()} CHT for ${
+        user.user.username
+      } (balance: ${formatUnits(
+        balanceBigInt,
+        community.primaryToken.decimals
+      )})`,
+      message
+    );
+
+    const bundler = new BundlerService(community);
+
+    if (DRY_RUN) {
+      return;
+    }
+
+    try {
+      const hash = await bundler.mintERC20Token(
+        signer,
+        community.primaryToken.address,
+        signerAccountAddress,
+        cardAddress,
+        mintStatus.mintedAmount.toString(),
+        message
+      );
+      console.log(
+        `Minted ${mintStatus.mintedAmount.toString()} CHT for ${
+          user.user.username
+        }: ${hash}`
+      );
+      await nostr?.publishMetadata(
+        `ethereum:${community.primaryToken.chain_id}:tx:${hash}` as URI,
+        {
+          content: message,
+          tags: [["role", roleSettings.name]],
+        }
+      );
+      await discordLog(
+        `Minted ${mintStatus.mintedAmount.toString()} CHT for <@${
+          user.user.id
+        }> for ${roleSettings.name} role`
+      );
+    } catch (e) {
+      console.error(
+        `Failed to mint ${mintStatus.mintedAmount.toString()} CHT for ${
+          user.user.username
+        } (${e.message})`
+      );
     }
   }
 };

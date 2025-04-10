@@ -11,6 +11,7 @@
         "start": "npm run register-commands && node dist/index.js",
         "dev": "tsx watch src/index.ts",
         "build": "rimraf dist && tsc",
+        "cron": "tsx src/scripts/cron-burn.ts",
         "register-commands": "tsx src/register-commands.ts",
         "register-bot": "tsx src/register-bot-account.ts",
         "update-bot": "tsx src/update-bot-account.ts",

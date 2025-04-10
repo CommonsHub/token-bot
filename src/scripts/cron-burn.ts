@@ -10,7 +10,7 @@ import { getMembers } from "../lib/discord";
 import { getAccountAddress } from "@citizenwallet/sdk";
 import { getCommunity } from "../cw";
 import { Wallet } from "ethers";
-import { burn, DiscordRoleSettings } from "../lib/token";
+import { burn, DiscordRoleSettings, mint } from "../lib/token";
 
 const roles: DiscordRoleSettings[] = [
   {
@@ -25,10 +25,52 @@ const roles: DiscordRoleSettings[] = [
     burnAmount: 3,
     frequency: "monthly",
   },
+  {
+    id: "1359965350846009526",
+    name: "Note taker steward",
+    mintAmount: 1,
+    frequency: "weekly",
+  },
+  {
+    id: "1359965220944220190",
+    name: "Toilet steward",
+    mintAmount: 3,
+    frequency: "weekly",
+  },
+  {
+    id: "1359964607803949250",
+    name: "Kitchen steward",
+    mintAmount: 3,
+    frequency: "weekly",
+  },
+  {
+    id: "1359964755930120295",
+    name: "Plant steward",
+    mintAmount: 1,
+    frequency: "weekly",
+  },
+  {
+    id: "1359964918605942885",
+    name: "Carpet steward",
+    mintAmount: 1,
+    frequency: "weekly",
+  },
+  {
+    id: "1359965976199823560",
+    name: "Token steward",
+    mintAmount: 1,
+    frequency: "weekly",
+  },
 ];
 
 const main = async () => {
   const token = process.env.DISCORD_TOKEN;
+
+  const date = new Date();
+  const day = date.getDate();
+  const dayOfWeek = date.getDay();
+
+  console.log(`Running on ${day} of the month and ${dayOfWeek} of the week`);
 
   // Create a new client instance
   const client = new Client({
@@ -90,14 +132,34 @@ const main = async () => {
       const users = await getMembers(guild, role.id);
       await Promise.all(
         users.map(async (user) => {
-          await burn(
-            role,
-            user,
-            community,
-            guild,
-            signer,
-            signerAccountAddress
-          );
+          if (role.frequency === "monthly") {
+            if (day !== 1) {
+              return;
+            }
+          } else if (role.frequency === "weekly") {
+            if (dayOfWeek !== 1) {
+              return;
+            }
+          }
+          if (role.burnAmount) {
+            await burn(
+              role,
+              user,
+              community,
+              guild,
+              signer,
+              signerAccountAddress
+            );
+          } else if (role.mintAmount) {
+            await mint(
+              role,
+              user,
+              community,
+              guild,
+              signer,
+              signerAccountAddress
+            );
+          }
         })
       );
     })
