@@ -1,38 +1,5 @@
 [
     {
-        "serverId": "global",
-        "serverName": "Global",
-        "communityChoices": [
-            "gratitude",
-            "eure.gnosis"
-        ]
-    },
-    {
-        "serverId": "1125394118827331634",
-        "serverName": "Citizen Wallet",
-        "communityChoices": [],
-        "mintingChoices": [
-            "gratitude"
-        ],
-        "liveUpdates": [
-            {
-                "channelId": "1354113011492851805",
-                "alias": "ctzn"
-            },
-            {
-                "channelId": "1356149878803271821",
-                "alias": "gratitude"
-            }
-        ]
-    },
-    {
-        "serverId": "649359982424358952",
-        "serverName": "Crypto Leftists",
-        "communityChoices": [
-            "bread"
-        ]
-    },
-    {
         "serverId": "1280532848604086365",
         "serverName": "Commons Hub",
         "communityChoices": [
@@ -48,10 +15,5 @@
                 "alias": "wallet.commonshub.brussels"
             }
         ]
-    },
-    {
-        "serverId": "1306205090998386698",
-        "serverName": "Test Server",
-        "communityChoices": []
     }
 ]

@@ -16,7 +16,6 @@ import { handleShowBalanceCommand } from "./commands/shareBalance";
 import { handleShareAddressCommand } from "./commands/shareAddress";
 import { handleBurnManyCommand } from "./commands/burn-many";
 import { handleDoCommand } from "./commands/do";
-import { startLiveUpdates } from "./live";
 import { handleBurnOrRevokeRoleCommand } from "./commands/burn-or-revoke-role";
 
 // Create a new client instance
@@ -51,8 +50,6 @@ client.on("disconnect", () => {
 // When the client is ready, run this code (only once)
 client.once(Events.ClientReady, (readyClient) => {
   console.log(`Ready! Logged in as ${readyClient.user.tag}`);
-
-  startLiveUpdates(readyClient);
 
   registerCommands();
 });
