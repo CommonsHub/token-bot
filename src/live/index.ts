@@ -119,8 +119,12 @@ const createEventDataHandler = (
         continue;
       }
 
-      const message = await channel.send(content);
-      console.log(message);
+      try {
+        console.log(">>> sending message to", channelId, content);
+        await channel.send(content);
+      } catch (error) {
+        console.error("Failed to send message to", channelId, error);
+      }
     }
   };
 };

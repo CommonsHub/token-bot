@@ -111,6 +111,7 @@ export class Nostr {
 
     const { data: secretKey } = nip19.decode(this.nsec);
     const signedEvent = finalizeEvent(event, secretKey as Uint8Array);
+    console.log(">>> NostrProvider publishing event", signedEvent);
     await Promise.any(this.pool.publish(this.relays!, signedEvent));
     console.log(">>> NostrProvider event published", signedEvent);
   }
