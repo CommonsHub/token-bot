@@ -31,6 +31,44 @@ const getKindFromURI = (uri: URI): string => {
   return `${blockchain}:${type}`;
 };
 
+// Extract hashtags from a text string
+// 1. #[kind:value with spaces] format
+// 2. #simpletag
+// 3. #key:attr format without spaces
+export function extractHashtags(text: string): {
+  tags: string[][];
+  cleanDescription: string;
+} {
+  const hashtagRegex = /#(?:\[(\w+:[^\]]+)\]|(\w+:(?:[^\s#]+)?|\w+))/g;
+  const matches = text.match(hashtagRegex) || [];
+
+  // Remove hashtags from the description
+  const cleanDescription = text
+    .replace(hashtagRegex, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const tags = matches.map((tag) => {
+    // If the tag starts with #[, we need to extract the content within brackets
+    if (tag.startsWith("#[")) {
+      const content = tag.slice(2, -1); // Remove #[ and ]
+      return [
+        content.substring(0, content.indexOf(":")),
+        content.substring(content.indexOf(":") + 1),
+      ];
+    }
+    // Handle regular tags
+    if (tag.includes(":")) {
+      return [
+        tag.substring(1, tag.indexOf(":")),
+        tag.substring(tag.indexOf(":") + 1),
+      ];
+    }
+    return ["t", tag.substring(1)];
+  });
+
+  return { tags, cleanDescription };
+}
 export class Nostr {
   private static instance: Nostr | null = null;
   private pool: SimplePool;
@@ -89,6 +127,12 @@ export class Nostr {
     uri: URI,
     { content, tags }: { content: string; tags: string[][] }
   ) {
+    if (tags.length === 0) {
+      const { tags: tagsFromContent, cleanDescription } =
+        extractHashtags(content);
+      content = cleanDescription;
+      tags = tagsFromContent;
+    }
     const event: EventTemplate = {
       kind: 1111,
       created_at: Math.floor(Date.now() / 1000),
@@ -113,7 +157,6 @@ export class Nostr {
     const signedEvent = finalizeEvent(event, secretKey as Uint8Array);
     console.log(">>> NostrProvider publishing event", signedEvent);
     await Promise.any(this.pool.publish(this.relays!, signedEvent));
-    console.log(">>> NostrProvider event published", signedEvent);
   }
 
   async close() {
