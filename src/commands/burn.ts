@@ -7,6 +7,10 @@ import { ContentResponse } from "../utils/content";
 import { createProgressSteps } from "../utils/progress";
 import { getAddressFromUserInputWithReplies } from "./conversion/address";
 import { BurnTaskArgs } from "./do/tasks";
+import { discordLog } from "../lib/discord";
+import { Nostr, URI } from "../lib/nostr";
+
+const nostr = Nostr.getInstance();
 
 export const handleBurnCommand = async (
   client: Client,
@@ -116,11 +120,18 @@ export const handleBurnCommand = async (
       }
     }
 
-    return interaction.editReply({
+    interaction.editReply({
       content: `✅ Burned **${amount} ${token.symbol}** from ${
         profile?.name ?? profile?.username ?? user
       } ([View Transaction](${explorer.url}/tx/${hash}))`,
     });
+
+    nostr?.publishMetadata(
+      `ethereum:${community.primaryToken.chain_id}:tx:${hash}` as URI,
+      { content: message, tags: [] }
+    );
+
+    discordLog(`Burned ${amount} ${token.symbol} from ${user} for ${message}`);
   } catch (error) {
     console.error("Failed to burn", error);
     await interaction.editReply({

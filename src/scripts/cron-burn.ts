@@ -38,6 +38,7 @@ const main = async () => {
       GatewayIntentBits.DirectMessages,
       GatewayIntentBits.GuildMessages,
       GatewayIntentBits.GuildMembers,
+      GatewayIntentBits.GuildModeration,
     ],
   });
 

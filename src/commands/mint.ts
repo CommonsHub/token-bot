@@ -2,12 +2,13 @@ import { BundlerService, getAccountAddress } from "@citizenwallet/sdk";
 import { ChatInputCommandInteraction, Client } from "discord.js";
 import { Wallet } from "ethers";
 import { getCommunity } from "../cw";
-import { createDiscordMention } from "../utils/address";
+import { createDiscordMention, isDiscordMention } from "../utils/address";
 import { ContentResponse, generateContent } from "../utils/content";
 import { createProgressSteps } from "../utils/progress";
 import { getAddressFromUserInputWithReplies } from "./conversion/address";
 import { MintTaskArgs } from "./do/tasks";
 import { Nostr, URI } from "../lib/nostr";
+import { discordLog } from "../lib/discord";
 
 const nostr = Nostr.getInstance();
 
@@ -39,7 +40,7 @@ export const handleMintCommand = async (
   await mintCommand(client, interaction, {
     name: "mint",
     alias: process.env.COMMUNITY_SLUG,
-    users: users.split(",").map((user) => user.trim()),
+    users: users.match(/<@\d+>/g),
     amount,
     message,
   });
@@ -122,11 +123,6 @@ export const mintCommand = async (
         message
       );
 
-      await nostr?.publishMetadata(
-        `ethereum:${community.primaryToken.chain_id}:tx:${hash}` as URI,
-        { content: message, tags: [] }
-      );
-
       content.header = createProgressSteps(
         3,
         `${userIndex + 1}/${users.length}`
@@ -169,6 +165,13 @@ export const mintCommand = async (
       await interaction.editReply({
         content: generateContent(content),
       });
+
+      nostr?.publishMetadata(
+        `ethereum:${community.primaryToken.chain_id}:tx:${hash}` as URI,
+        { content: message, tags: [] }
+      );
+
+      discordLog(`Minted ${amount} ${token.symbol} to ${user} for ${message}`);
     } catch (error) {
       console.error("Failed to mint", error);
       content.content.push("❌ Failed to mint");

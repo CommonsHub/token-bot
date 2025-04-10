@@ -7,7 +7,8 @@ import {
 } from "@citizenwallet/sdk";
 import { keccak256, toUtf8Bytes, Wallet, formatUnits } from "ethers";
 
-import { Nostr, URI } from "../lib/nostr";
+import { Nostr, URI } from "./nostr";
+import { discordLog } from "./discord";
 
 const nostr = Nostr.getInstance();
 
@@ -49,6 +50,16 @@ export const burn = async (
     const balance =
       Number(balanceBigInt) / 10 ** community.primaryToken.decimals;
 
+    console.log(
+      `DRYRUN: Burning ${burnStatus.remainingBurns.toString()} CHT for ${
+        user.user.username
+      } (balance: ${formatUnits(
+        balanceBigInt,
+        community.primaryToken.decimals
+      )})`,
+      message
+    );
+
     if (burnStatus.remainingBurns > balance) {
       if (DRY_RUN) {
         console.log(
@@ -67,15 +78,6 @@ export const burn = async (
       const bundler = new BundlerService(community);
 
       if (DRY_RUN) {
-        console.log(
-          `DRYRUN: Burning ${burnStatus.remainingBurns.toString()} CHT for ${
-            user.user.username
-          } (balance: ${formatUnits(
-            balanceBigInt,
-            community.primaryToken.decimals
-          )})`,
-          message
-        );
         return;
       }
 
@@ -89,7 +91,9 @@ export const burn = async (
           message
         );
         console.log(
-          `Burnt ${burnStatus.remainingBurns.toString()} CHT for ${user}: ${hash}`
+          `Burnt ${burnStatus.remainingBurns.toString()} CHT for ${
+            user.user.username
+          }: ${hash}`
         );
         await nostr?.publishMetadata(
           `ethereum:${community.primaryToken.chain_id}:tx:${hash}` as URI,
@@ -98,11 +102,16 @@ export const burn = async (
             tags: [["role", roleSettings.name]],
           }
         );
+        discordLog(
+          `Burned ${burnStatus.remainingBurns.toString()} CHT for <@${
+            user.user.id
+          }> for ${message}`
+        );
       } catch (e) {
         console.error(
-          `Failed to burnt ${burnStatus.remainingBurns.toString()} CHT for ${user} (${
-            e.message
-          })`
+          `Failed to burn ${burnStatus.remainingBurns.toString()} CHT for ${
+            user.user.username
+          } (${e.message})`
         );
       }
     }
