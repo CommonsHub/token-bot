@@ -106,6 +106,10 @@ const main = async () => {
   client.login(token);
 
   const GUILD_ID = process.env.DISCORD_GUILD_ID;
+  if (!GUILD_ID) {
+    console.error("DISCORD_GUILD_ID env variable is not set");
+    return;
+  }
   const guild = await client.guilds.fetch(GUILD_ID);
 
   const community = getCommunity(process.env.COMMUNITY_SLUG);
