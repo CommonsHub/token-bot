@@ -56,6 +56,24 @@ const roles: DiscordRoleSettings[] = [
     frequency: "weekly",
   },
   {
+    id: "1359966155145482431",
+    name: "Communication steward",
+    mintAmount: 2,
+    frequency: "weekly",
+  },
+  {
+    id: "1366460956250476655",
+    name: "Surfaces steward",
+    mintAmount: 2,
+    frequency: "weekly",
+  },
+  {
+    id: "1366461641226453093",
+    name: "Growth steward",
+    mintAmount: 1,
+    frequency: "weekly",
+  },
+  {
     id: "1359965976199823560",
     name: "Token steward",
     mintAmount: 1,
