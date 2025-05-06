@@ -52,7 +52,13 @@ const roles: DiscordRoleSettings[] = [
   {
     id: "1359964918605942885",
     name: "Carpet steward",
-    mintAmount: 1,
+    mintAmount: 2,
+    frequency: "weekly",
+  },
+  {
+    id: "1369303976679571537",
+    name: "Backside (2nd floor) steward",
+    mintAmount: 2,
     frequency: "weekly",
   },
   {
