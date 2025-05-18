@@ -151,6 +151,18 @@ export const mintCommand = async (
           if (message) {
             await dmChannel.send(`*${message}*`);
           }
+
+          nostr.publishMetadata(
+            `ethereum:${community.primaryToken.chain_id}:address:${receiverAddress}` as URI,
+            {
+              content: receiver.displayName,
+              tags: [
+                ["username", receiver.username],
+                ["picture", receiver.avatarURL({ size: 128 })],
+                ["picture_large", receiver.avatarURL({ size: 4096 })],
+              ],
+            }
+          );
         } catch (error) {
           console.error("Failed to send message to receiver", error);
         }
