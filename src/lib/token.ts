@@ -183,10 +183,13 @@ export const mint = async (
           tags: [["role", roleSettings.name]],
         }
       );
+      const explorer = community.explorer;
       await discordLog(
         `Minted ${mintStatus.mintedAmount.toString()} CHT for <@${
           user.user.id
-        }> for ${roleSettings.name} role`
+        }> for ${roleSettings.name} role ([View Transaction](<${
+          explorer.url
+        }/tx/${hash}>))`
       );
     } catch (e) {
       console.error(

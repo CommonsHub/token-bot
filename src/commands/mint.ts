@@ -159,7 +159,7 @@ export const mintCommand = async (
               tags: [
                 ["username", receiver.username],
                 ["picture", receiver.avatarURL({ size: 128 })],
-                ["picture_large", receiver.avatarURL({ size: 4096 })],
+                ["picture_large", receiver.avatarURL({ size: 2048 })],
               ],
             }
           );
@@ -184,7 +184,9 @@ export const mintCommand = async (
         { content: message, tags: [] }
       );
 
-      discordLog(`Minted ${amount} ${token.symbol} to ${user} for ${message}`);
+      discordLog(
+        `Minted ${amount} ${token.symbol} to ${user} for ${message} ([View Transaction](<${explorer.url}/tx/${hash}>))`
+      );
     } catch (error) {
       console.error("Failed to mint", error);
       content.content.push("❌ Failed to mint");
