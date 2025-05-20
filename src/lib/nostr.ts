@@ -79,6 +79,7 @@ export class Nostr {
   ) {
     this.nsec = nsec || process.env.NOSTR_NSEC;
     this.relays = relays || [
+      "wss://nostr.commonshub.brussels",
       "wss://nostr-pub.wellorder.net",
       "wss://nostr.swiss-enigma.ch",
       "wss://relay.nostr.band",
@@ -139,7 +140,11 @@ export class Nostr {
       content,
       tags: [["i", uri.toLowerCase()], ["k", getKindFromURI(uri)], ...tags],
     };
-    await this.publish(event);
+    try {
+      await this.publish(event);
+    } catch (error) {
+      console.error("Failed to publish metadata", error, "event:", event);
+    }
   }
 
   async publish(event: EventTemplate) {
