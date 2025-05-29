@@ -85,6 +85,12 @@ const roles: DiscordRoleSettings[] = [
     mintAmount: 1,
     frequency: "weekly",
   },
+  {
+    id: "1377753360140075279",
+    name: "Laundry steward",
+    mintAmount: 1,
+    frequency: "weekly",
+  },
 ];
 
 const main = async () => {

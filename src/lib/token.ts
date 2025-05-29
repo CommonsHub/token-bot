@@ -141,28 +141,28 @@ export const mint = async (
   if (mintStatus.status === "mint") {
     console.error(`${user} has already minted`);
   } else {
-    const balanceBigInt = await getAccountBalance(community, cardAddress);
-
-    const balance =
-      Number(balanceBigInt) / 10 ** community.primaryToken.decimals;
-
-    console.log(
-      `DRYRUN: Minting ${mintStatus.mintedAmount.toString()} CHT for ${
-        user.user.username
-      } (balance: ${formatUnits(
-        balanceBigInt,
-        community.primaryToken.decimals
-      )})`,
-      message
-    );
-
     const bundler = new BundlerService(community);
 
     if (DRY_RUN) {
+      const balanceBigInt = await getAccountBalance(community, cardAddress);
+      console.log(
+        `DRYRUN: Minting ${mintStatus.mintedAmount.toString()} CHT for ${
+          user.user.username
+        } (balance: ${formatUnits(
+          balanceBigInt,
+          community.primaryToken.decimals
+        )})`,
+        message
+      );
       return;
     }
 
     try {
+      console.log(
+        `Minting ${mintStatus.mintedAmount.toString()} CHT for ${
+          user.user.username
+        }`
+      );
       const hash = await bundler.mintERC20Token(
         signer,
         community.primaryToken.address,
@@ -171,11 +171,7 @@ export const mint = async (
         mintStatus.mintedAmount.toString(),
         message
       );
-      console.log(
-        `Minted ${mintStatus.mintedAmount.toString()} CHT for ${
-          user.user.username
-        }: ${hash}`
-      );
+      console.log(`Minted hash: ${hash}`);
       await nostr?.publishMetadata(
         `ethereum:${community.primaryToken.chain_id}:tx:${hash}` as URI,
         {
@@ -195,7 +191,8 @@ export const mint = async (
       console.error(
         `Failed to mint ${mintStatus.mintedAmount.toString()} CHT for ${
           user.user.username
-        } (${e.message})`
+        } (${e.message})`,
+        e
       );
     }
   }
