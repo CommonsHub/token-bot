@@ -128,7 +128,7 @@ export const handleBurnManyCommand = async (
       content.content.push(
         `✅ Burned **${amount} ${token.symbol}** from ${
           profile?.name ?? profile?.username ?? user
-        } ([View Transaction](${explorer.url}/tx/${hash}))`
+        } ([tx](${explorer.url}/tx/${hash}))`
       );
 
       await interaction.editReply({

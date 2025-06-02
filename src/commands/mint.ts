@@ -172,7 +172,7 @@ export const mintCommand = async (
       content.content.push(
         `**${amount} ${token.symbol}** to ${
           profile?.name ?? profile?.username ?? user
-        } ([View Transaction](${explorer.url}/tx/${hash}))`
+        } ([tx](${explorer.url}/tx/${hash}))`
       );
 
       await interaction.editReply({

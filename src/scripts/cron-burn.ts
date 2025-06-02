@@ -18,12 +18,14 @@ const roles: DiscordRoleSettings[] = [
     name: "shifters",
     burnAmount: 10,
     frequency: "monthly",
+    gracePeriod: 30,
   },
   {
     id: "1356973314794328254",
     name: "coworker",
     burnAmount: 3,
     frequency: "monthly",
+    gracePeriod: 30,
   },
   {
     id: "1359965350846009526",
@@ -193,6 +195,8 @@ const main = async () => {
               signer,
               signerAccountAddress
             );
+            // wait for 1 second to avoid rate limiting
+            await new Promise((resolve) => setTimeout(resolve, 1000));
           }
         })
       );

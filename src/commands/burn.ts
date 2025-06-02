@@ -123,7 +123,7 @@ export const handleBurnCommand = async (
     interaction.editReply({
       content: `✅ Burned **${amount} ${token.symbol}** from ${
         profile?.name ?? profile?.username ?? user
-      } ([View Transaction](${explorer.url}/tx/${hash}))`,
+      } ([tx](${explorer.url}/tx/${hash}))`,
     });
 
     nostr?.publishMetadata(
@@ -230,7 +230,7 @@ export const burnCommand = async (
     await interaction.editReply({
       content: `✅ Burned **${amount} ${token.symbol}** from ${
         profile?.name ?? profile?.username ?? user
-      } ([View Transaction](${explorer.url}/tx/${hash}))`,
+      } ([tx](${explorer.url}/tx/${hash}))`,
     });
 
     return;

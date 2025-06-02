@@ -1,4 +1,4 @@
-import { Guild, GuildMember } from "discord.js/typings";
+import { Guild, GuildMember, PermissionsBitField } from "discord.js";
 import {
   BundlerService,
   CommunityConfig,
@@ -20,7 +20,92 @@ export type DiscordRoleSettings = {
   burnAmount?: number;
   mintAmount?: number;
   frequency: string;
+  gracePeriod?: number; // number of days after which the role is removed
+  ignoreUsers?: string[]; // if true, the role is not removed
 };
+
+async function removeRole(
+  guild: Guild,
+  targetMember: GuildMember,
+  roleId: string
+) {
+  const botMember = guild.members.me;
+
+  if (!botMember) {
+    console.log("❌ Bot is not a member of this guild.");
+    return;
+  }
+
+  // Check 1: Bot permission
+  if (!botMember.permissions.has(PermissionsBitField.Flags.ManageRoles)) {
+    console.log("❌ Bot lacks 'Manage Roles' permission.");
+    console.log(
+      "🔧 Solution: Grant 'Manage Roles' to the bot in the server settings."
+    );
+    return;
+  }
+
+  // Get the role object from the guild
+  const roleToRemove = guild.roles.cache.get(roleId);
+  if (!roleToRemove) {
+    console.log(`❌ Role with ID '${roleId}' not found in guild.`);
+    return;
+  }
+
+  console.log(
+    "🧪 Role to remove:",
+    roleToRemove.name,
+    "position:",
+    roleToRemove.position,
+    "for user:",
+    `${targetMember.user.displayName} (@${targetMember.user.tag})`,
+    "joined at:",
+    targetMember.joinedAt
+  );
+
+  // Check 2: Role hierarchy (bot vs role)
+  if (roleToRemove.position >= botMember.roles.highest.position) {
+    console.log(
+      `❌ The role '${roleToRemove.name}' is higher or equal to the bot's highest role.`
+    );
+    console.log(
+      "🔧 Solution: Move the bot's role higher than the role you're trying to remove."
+    );
+    return;
+  }
+
+  // Check 3: Role hierarchy (bot vs target member)
+  if (
+    targetMember.roles.highest.position >= botMember.roles.highest.position &&
+    targetMember.id !== botMember.id
+  ) {
+    console.log(
+      `❌ Target member '${targetMember.user.tag}' has a role higher or equal to the bot's highest role.`
+    );
+    console.log(
+      "🔧 Solution: The bot cannot modify members with higher/equal roles. Move the bot role higher."
+    );
+    return;
+  }
+
+  // Check 4: Role existence
+  if (!targetMember.roles.cache.has(roleToRemove.id)) {
+    console.log(
+      `⚠️ Target member does not have the role '${roleToRemove.name}'. Nothing to remove.`
+    );
+    return;
+  }
+
+  // All good — try to remove the role
+  try {
+    await targetMember.roles.remove(roleToRemove);
+    console.log(
+      `✅ Successfully removed role '${roleToRemove.name}' from '${targetMember.user.tag}'.`
+    );
+  } catch (err) {
+    console.error("❌ Failed to remove role:", err);
+  }
+}
 
 export const burn = async (
   roleSettings: DiscordRoleSettings,
@@ -41,7 +126,11 @@ export const burn = async (
   }
   // check user status
   const burnStatus = { status: "new", burntAmount: roleSettings.burnAmount }; //await getBurnStatus(user, role);
-  const message = `Burning tokens for ${roleSettings.name} role`;
+  const message = `${roleSettings.frequency} contribution for ${roleSettings.name} role`;
+  if (roleSettings.ignoreUsers?.includes(user.user.username)) {
+    console.log(`Ignoring user ${user.user.username}`);
+    return;
+  }
   if (burnStatus.status === "burnt") {
     console.error(`${user} has already burned`);
   } else {
@@ -50,68 +139,86 @@ export const burn = async (
     const balance =
       Number(balanceBigInt) / 10 ** community.primaryToken.decimals;
 
-    console.log(
-      `DRYRUN: Burning ${burnStatus.burntAmount.toString()} CHT for ${
-        user.user.username
-      } (balance: ${formatUnits(
-        balanceBigInt,
-        community.primaryToken.decimals
-      )})`,
-      message
-    );
-
     if (burnStatus.burntAmount > balance) {
       if (DRY_RUN) {
         console.log(
           `DRYRUN: ${user.user.username} has not enough CHT, removing role ${roleSettings.name}.`
         );
       } else {
-        await guild.members.removeRole({
-          user: user,
-          role: roleSettings.id,
-        });
-        console.log(
-          `${user.user.username} has not enough CHT, removed role ${roleSettings.name}.`
-        );
+        if (
+          Date.now() - user.joinedTimestamp >
+          1000 * 60 * 60 * 24 * (roleSettings.gracePeriod || 30)
+        ) {
+          await removeRole(guild, user, roleSettings.id);
+        } else {
+          console.log(
+            `${user.user.displayName} (@${
+              user.user.tag
+            }) has been in the server for less than ${
+              roleSettings.gracePeriod || 30
+            } days, not removing role ${roleSettings.name}.`
+          );
+        }
       }
     } else {
       const bundler = new BundlerService(community);
+      const newBalance = balance - burnStatus.burntAmount;
 
-      if (DRY_RUN) {
-        return;
-      }
+      console.log(
+        `\n\n\nDRYRUN: Burning ${burnStatus.burntAmount.toString()} CHT for ${
+          user.user.username
+        } (balance: ${balance}, new balance: ${newBalance})`,
+        message
+      );
 
       try {
-        const hash = await bundler.burnFromERC20Token(
-          signer,
-          community.primaryToken.address,
-          signerAccountAddress,
-          cardAddress,
-          burnStatus.burntAmount.toString(),
-          message
-        );
+        const hash = DRY_RUN
+          ? "0x123"
+          : await bundler.burnFromERC20Token(
+              signer,
+              community.primaryToken.address,
+              signerAccountAddress,
+              cardAddress,
+              burnStatus.burntAmount.toString(),
+              message
+            );
         console.log(
           `Burnt ${burnStatus.burntAmount.toString()} CHT for ${
             user.user.username
           }: ${hash}`
         );
-        await nostr?.publishMetadata(
-          `ethereum:${community.primaryToken.chain_id}:tx:${hash}` as URI,
-          {
-            content: message,
-            tags: [["role", roleSettings.name]],
-          }
-        );
-        await discordLog(
-          `Burned ${burnStatus.burntAmount.toString()} CHT for <@${
-            user.user.id
-          }> for ${roleSettings.name} role`
-        );
+
+        const txUri =
+          `ethereum:${community.primaryToken.chain_id}:tx:${hash}` as URI;
+        const nostrData = {
+          content: message,
+          tags: [["role", roleSettings.name]],
+        };
+        if (DRY_RUN) {
+          console.log("DRY RUN:Publishing to Nostr", txUri, nostrData);
+        } else {
+          await nostr?.publishMetadata(txUri, nostrData);
+        }
+
+        const discordMessage = `Burned ${burnStatus.burntAmount.toString()} CHT for <@${
+          user.user.id
+        }> for ${roleSettings.frequency} contribution for ${
+          roleSettings.name
+        } role, new balance: ${newBalance} ${
+          community.primaryToken.symbol
+        } ([View account](<https://txinfo.xyz/celo/address/${cardAddress}>))`;
+
+        if (DRY_RUN) {
+          console.log("DRY RUN: Discord log", discordMessage);
+        } else {
+          await discordLog(discordMessage);
+        }
       } catch (e) {
         console.error(
           `Failed to burn ${burnStatus.burntAmount.toString()} CHT for ${
             user.user.username
-          } (${e.message})`
+          } (${e.message})`,
+          e
         );
       }
     }
