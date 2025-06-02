@@ -232,9 +232,7 @@ export const sendCommand = async (
           await dmChannel.send(
             `${createDiscordMention(interaction.user.id)} sent **${amount} ${
               token.symbol
-            }** to your account ([View Transaction](${
-              explorer.url
-            }/tx/${hash}))`
+            }** to your account ([tx](${explorer.url}/tx/${hash}))`
           );
 
           if (message) {

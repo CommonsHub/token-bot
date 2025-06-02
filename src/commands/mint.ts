@@ -143,9 +143,7 @@ export const mintCommand = async (
           await dmChannel.send(
             `${createDiscordMention(interaction.user.id)} minted **${amount} ${
               token.symbol
-            }** to your account ([View Transaction](${
-              explorer.url
-            }/tx/${hash}))`
+            }** to your account ([tx](${explorer.url}/tx/${hash}))`
           );
 
           if (message) {
@@ -185,7 +183,7 @@ export const mintCommand = async (
       );
 
       discordLog(
-        `Minted ${amount} ${token.symbol} to ${user} for ${message} ([View Transaction](<${explorer.url}/tx/${hash}>))`
+        `Minted ${amount} ${token.symbol} to ${user} for ${message} ([tx](<${explorer.url}/tx/${hash}>))`
       );
     } catch (error) {
       console.error("Failed to mint", error);

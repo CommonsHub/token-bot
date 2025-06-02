@@ -107,9 +107,7 @@ export const handleBurnCommand = async (
         await dmChannel.send(
           `${createDiscordMention(interaction.user.id)} burned **${amount} ${
             token.symbol
-          }** from your account ([View Transaction](${
-            explorer.url
-          }/tx/${hash}))`
+          }** from your account ([tx](${explorer.url}/tx/${hash}))`
         );
 
         if (message) {
@@ -214,9 +212,7 @@ export const burnCommand = async (
         await dmChannel.send(
           `${createDiscordMention(interaction.user.id)} burned **${amount} ${
             token.symbol
-          }** from your account ([View Transaction](${
-            explorer.url
-          }/tx/${hash}))`
+          }** from your account ([tx](${explorer.url}/tx/${hash}))`
         );
 
         if (message) {
