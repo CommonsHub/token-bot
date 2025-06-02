@@ -204,7 +204,9 @@ export const burn = async (
           user.user.id
         }> for ${roleSettings.frequency} contribution for ${
           roleSettings.name
-        } role, new balance: ${newBalance} ${
+        } role ([tx](<${
+          community.explorer.url
+        }/tx/${hash}>)), new balance: ${newBalance} ${
           community.primaryToken.symbol
         } ([View account](<https://txinfo.xyz/celo/address/${cardAddress}>))`;
 
@@ -244,56 +246,55 @@ export const mint = async (
   }
   // check user status
   const mintStatus = { status: "new", mintedAmount: roleSettings.mintAmount };
-  const message = `Minting tokens for ${roleSettings.name} role`;
+  const message = `${roleSettings.frequency} issuance for ${roleSettings.name} role`;
   if (mintStatus.status === "mint") {
     console.error(`${user} has already minted`);
   } else {
     const bundler = new BundlerService(community);
 
-    if (DRY_RUN) {
-      const balanceBigInt = await getAccountBalance(community, cardAddress);
-      console.log(
-        `DRYRUN: Minting ${mintStatus.mintedAmount.toString()} CHT for ${
-          user.user.username
-        } (balance: ${formatUnits(
-          balanceBigInt,
-          community.primaryToken.decimals
-        )})`,
-        message
-      );
-      return;
-    }
+    const balanceBigInt = await getAccountBalance(community, cardAddress);
+    const balance =
+      Number(balanceBigInt) / 10 ** community.primaryToken.decimals;
+
+    const newBalance = balance + mintStatus.mintedAmount;
 
     try {
-      console.log(
-        `Minting ${mintStatus.mintedAmount.toString()} CHT for ${
-          user.user.username
-        }`
-      );
-      const hash = await bundler.mintERC20Token(
-        signer,
-        community.primaryToken.address,
-        signerAccountAddress,
-        cardAddress,
-        mintStatus.mintedAmount.toString(),
-        message
-      );
+      const hash = DRY_RUN
+        ? "0x123"
+        : await bundler.mintERC20Token(
+            signer,
+            community.primaryToken.address,
+            signerAccountAddress,
+            cardAddress,
+            mintStatus.mintedAmount.toString(),
+            message
+          );
       console.log(`Minted hash: ${hash}`);
-      await nostr?.publishMetadata(
-        `ethereum:${community.primaryToken.chain_id}:tx:${hash}` as URI,
-        {
-          content: message,
-          tags: [["role", roleSettings.name]],
-        }
-      );
-      const explorer = community.explorer;
-      await discordLog(
-        `Minted ${mintStatus.mintedAmount.toString()} CHT for <@${
-          user.user.id
-        }> for ${roleSettings.name} role ([View Transaction](<${
-          explorer.url
-        }/tx/${hash}>))`
-      );
+
+      const txUri =
+        `ethereum:${community.primaryToken.chain_id}:tx:${hash}` as URI;
+
+      const nostrData = {
+        content: message,
+        tags: [["role", roleSettings.name]],
+      };
+      if (DRY_RUN) {
+        console.log("DRY RUN: Posting to Nostr", txUri, nostrData);
+      } else {
+        await nostr?.publishMetadata(txUri, nostrData);
+      }
+      const discordMessage = `Minted ${mintStatus.mintedAmount.toString()} CHT for <@${
+        user.user.id
+      }> for ${roleSettings.name} role ([tx](<${
+        community.explorer.url
+      }/tx/${hash}>)), new balance: ${newBalance} ${
+        community.primaryToken.symbol
+      } ([View account](<https://txinfo.xyz/celo/address/${cardAddress}>))`;
+      if (DRY_RUN) {
+        console.log("DRY RUN: Posting to Discord", discordMessage);
+      } else {
+        await discordLog(discordMessage);
+      }
     } catch (e) {
       console.error(
         `Failed to mint ${mintStatus.mintedAmount.toString()} CHT for ${
