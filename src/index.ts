@@ -132,8 +132,8 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 app.get("/", (req, res) => {
-  console.log("Citizen Wallet Discord Bot");
-  res.send("Citizen Wallet Discord Bot");
+  console.log("Commons Hub Discord Token Bot");
+  res.send("Commons Hub Discord Token Bot");
 });
 
 app.get("/health", (req, res) => {
