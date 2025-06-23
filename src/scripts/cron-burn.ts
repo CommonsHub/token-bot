@@ -58,6 +58,12 @@ const roles: DiscordRoleSettings[] = [
     frequency: "weekly",
   },
   {
+    id: "1384167690951725096",
+    name: "Backside (1st floor) steward",
+    mintAmount: 2,
+    frequency: "weekly",
+  },
+  {
     id: "1369303976679571537",
     name: "Backside (2nd floor) steward",
     mintAmount: 2,
@@ -91,6 +97,24 @@ const roles: DiscordRoleSettings[] = [
     id: "1377753360140075279",
     name: "Laundry steward",
     mintAmount: 1,
+    frequency: "weekly",
+  },
+  {
+    id: "1384166466315882628",
+    name: "Groceries steward",
+    mintAmount: 1,
+    frequency: "weekly",
+  },
+  {
+    id: "1384167297068957806",
+    name: "Shifters steward",
+    mintAmount: 1,
+    frequency: "weekly",
+  },
+  {
+    id: "1384167425011875991",
+    name: "Stairs steward",
+    mintAmount: 2,
     frequency: "weekly",
   },
 ];
