@@ -13,6 +13,7 @@ import { discordLog } from "./discord";
 const nostr = Nostr.getInstance();
 
 const DRY_RUN = ["test", "dev", "dryrun"].includes(process.env.ENV);
+console.log("DRY RUN:", DRY_RUN);
 
 export type DiscordRoleSettings = {
   id: string;
@@ -164,12 +165,14 @@ export const burn = async (
       const bundler = new BundlerService(community);
       const newBalance = balance - burnStatus.burntAmount;
 
-      console.log(
-        `\n\n\nDRYRUN: Burning ${burnStatus.burntAmount.toString()} CHT for ${
-          user.user.username
-        } (balance: ${balance}, new balance: ${newBalance})`,
-        message
-      );
+      if (DRY_RUN) {
+        console.log(
+          `\n\n\nDRYRUN: Burning ${burnStatus.burntAmount.toString()} CHT for ${
+            user.user.username
+          } (balance: ${balance}, new balance: ${newBalance})`,
+          message
+        );
+      }
 
       try {
         const hash = DRY_RUN

@@ -193,7 +193,7 @@ const main = async () => {
       await Promise.all(
         users.map(async (user) => {
           if (role.frequency === "monthly") {
-            if (day !== 1) {
+            if (day !== 4) {
               return;
             }
           } else if (role.frequency === "weekly") {
