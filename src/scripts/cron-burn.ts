@@ -19,6 +19,7 @@ const roles: DiscordRoleSettings[] = [
     burnAmount: 10,
     frequency: "monthly",
     gracePeriod: 30,
+    ignoreUsers: [],
   },
   {
     id: "1356973314794328254",
@@ -190,40 +191,38 @@ const main = async () => {
   await Promise.all(
     roles.map(async (role) => {
       const users = await getMembers(guild, role.id);
-      await Promise.all(
-        users.map(async (user) => {
-          if (role.frequency === "monthly") {
-            if (day !== 4) {
-              return;
-            }
-          } else if (role.frequency === "weekly") {
-            if (dayOfWeek !== 1) {
-              return;
-            }
+      for (const user of users) {
+        if (role.frequency === "monthly") {
+          if (day !== 1) {
+            return;
           }
-          if (role.burnAmount) {
-            await burn(
-              role,
-              user,
-              community,
-              guild,
-              signer,
-              signerAccountAddress
-            );
-          } else if (role.mintAmount) {
-            await mint(
-              role,
-              user,
-              community,
-              guild,
-              signer,
-              signerAccountAddress
-            );
-            // wait for 1 second to avoid rate limiting
-            await new Promise((resolve) => setTimeout(resolve, 1000));
+        } else if (role.frequency === "weekly") {
+          if (dayOfWeek !== 1) {
+            return;
           }
-        })
-      );
+        }
+        if (role.burnAmount) {
+          await burn(
+            role,
+            user,
+            community,
+            guild,
+            signer,
+            signerAccountAddress
+          );
+        } else if (role.mintAmount) {
+          await mint(
+            role,
+            user,
+            community,
+            guild,
+            signer,
+            signerAccountAddress
+          );
+          // wait for 1 second to avoid rate limiting
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+      }
     })
   );
   console.log(">>> done");

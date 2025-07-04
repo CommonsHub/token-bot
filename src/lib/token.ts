@@ -175,6 +175,12 @@ export const burn = async (
       }
 
       try {
+        console.log(
+          `Burning ${burnStatus.burntAmount.toString()} CHT for ${
+            user.user.username
+          }`
+        );
+
         const hash = DRY_RUN
           ? "0x123"
           : await bundler.burnFromERC20Token(
