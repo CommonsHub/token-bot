@@ -36,20 +36,44 @@ const roles: DiscordRoleSettings[] = [
   },
   {
     id: "1359965220944220190",
-    name: "Toilet steward",
-    mintAmount: 3,
+    name: "Toilet steward 1st floor",
+    mintAmount: 2,
+    frequency: "weekly",
+  },
+  {
+    id: "1412341727985143889",
+    name: "Toilet steward 2nd floor",
+    mintAmount: 2,
+    frequency: "weekly",
+  },
+  {
+    id: "1412341733362241537",
+    name: "Trash steward Sunday",
+    mintAmount: 1,
+    frequency: "weekly",
+  },
+  {
+    id: "1412341738365915197",
+    name: "Trash steward Wednesday",
+    mintAmount: 1,
     frequency: "weekly",
   },
   {
     id: "1359964607803949250",
     name: "Kitchen steward",
-    mintAmount: 3,
+    mintAmount: 2,
+    frequency: "weekly",
+  },
+  {
+    id: "1412341338367852616",
+    name: "Diswasher and sink steward",
+    mintAmount: 1,
     frequency: "weekly",
   },
   {
     id: "1359964755930120295",
     name: "Plant steward",
-    mintAmount: 1,
+    mintAmount: 2,
     frequency: "weekly",
   },
   {
@@ -61,6 +85,12 @@ const roles: DiscordRoleSettings[] = [
   {
     id: "1384167690951725096",
     name: "Backside (1st floor) steward",
+    mintAmount: 2,
+    frequency: "weekly",
+  },
+  {
+    id: "1412339166506651668",
+    name: "Backside (1.5 floor) steward",
     mintAmount: 2,
     frequency: "weekly",
   },
