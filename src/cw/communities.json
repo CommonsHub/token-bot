@@ -27,6 +27,7 @@
                 "chain_id": 42220
             }
         },
+        "rpc_url": "https://forno.celo.org",
         "tokens": {
             "42220:0x65DD32834927de9E57E72a3E2130a19f81C6371D": {
                 "standard": "erc20",

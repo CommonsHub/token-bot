@@ -264,7 +264,9 @@ export const sendCommand = async (
       discordLog(
         `${createDiscordMention(interaction.user.id)} sent **${amount} ${
           token.symbol
-        }** to ${user} ${message ? `for ${message}` : ""}`
+        }** to ${user} ${
+          message ? `for ${message} ([tx](${explorer.url}/tx/${hash}))` : ""
+        }`
       );
     } catch (error) {
       console.error("Failed to send transaction", error);

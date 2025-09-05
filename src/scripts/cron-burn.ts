@@ -7,10 +7,11 @@
 import "dotenv/config";
 import { Client, GatewayIntentBits } from "discord.js";
 import { getMembers } from "../lib/discord";
-import { getAccountAddress } from "@citizenwallet/sdk";
+import { getAccountAddress, getAccountBalance } from "@citizenwallet/sdk";
 import { getCommunity } from "../cw";
 import { Wallet } from "ethers";
 import { burn, DiscordRoleSettings, mint } from "../lib/token";
+import { getNativeBalance } from "../lib/blockchain";
 
 const roles: DiscordRoleSettings[] = [
   {
@@ -208,6 +209,9 @@ const main = async () => {
   }
 
   const signer = new Wallet(privateKey);
+
+  const nativeBalance = await getNativeBalance(signer.address);
+  console.log(`Native balance: ${nativeBalance} CELO`);
 
   const signerAccountAddress = await getAccountAddress(
     community,

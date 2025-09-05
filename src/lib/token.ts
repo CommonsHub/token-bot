@@ -4,8 +4,16 @@ import {
   CommunityConfig,
   getAccountBalance,
   getCardAddress,
+  MINTER_ROLE,
+  hasRole,
 } from "@citizenwallet/sdk";
-import { keccak256, toUtf8Bytes, Wallet, formatUnits } from "ethers";
+import {
+  keccak256,
+  toUtf8Bytes,
+  Wallet,
+  Contract,
+  JsonRpcProvider,
+} from "ethers";
 
 import { Nostr, URI } from "./nostr";
 import { discordLog } from "./discord";
@@ -181,48 +189,99 @@ export const burn = async (
           }`
         );
 
-        const hash = DRY_RUN
-          ? "0x123"
-          : await bundler.burnFromERC20Token(
-              signer,
+        let hash: string;
+
+        if (DRY_RUN) {
+          hash = "0x123";
+        } else {
+          // Create provider and contract instance
+          const provider = new JsonRpcProvider(community.primaryRPCUrl);
+          const connectedSigner = signer.connect(provider);
+
+          // ERC20 ABI with burnFrom function
+          const erc20Abi = [
+            "function burnFrom(address account, uint256 amount) external",
+            "function balanceOf(address account) external view returns (uint256)",
+            "function decimals() external view returns (uint8)",
+            "function symbol() external view returns (string)",
+            "function name() external view returns (string)",
+            "function allowance(address owner, address spender) external view returns (uint256)",
+            "function approve(address spender, uint256 amount) external returns (bool)",
+          ];
+
+          const tokenContract = new Contract(
+            community.primaryToken.address,
+            erc20Abi,
+            connectedSigner
+          );
+
+          // Convert amount to proper decimals
+          const burnAmount = BigInt(
+            burnStatus.burntAmount * 10 ** community.primaryToken.decimals
+          );
+
+          try {
+            // Call burnFrom function directly
+            const tx = await tokenContract.burnFrom(cardAddress, burnAmount);
+            hash = tx.hash;
+
+            // Wait for transaction to be mined
+            await tx.wait();
+          } catch (e) {
+            const hasMinterRole = await hasRole(
               community.primaryToken.address,
+              MINTER_ROLE,
               signerAccountAddress,
-              cardAddress,
-              burnStatus.burntAmount.toString(),
-              message
+              provider
             );
-        console.log(
-          `Burnt ${burnStatus.burntAmount.toString()} CHT for ${
-            user.user.username
-          }: ${hash}`
-        );
+            if (!hasMinterRole) {
+              console.error(
+                `User ${user.user.username} does not have the minter role`
+              );
+              return;
+            }
+            console.error(
+              `Failed to burn ${burnStatus.burntAmount.toString()} CHT for ${
+                user.user.username
+              } (${e.message})`,
+              e
+            );
+            return;
+          }
 
-        const txUri =
-          `ethereum:${community.primaryToken.chain_id}:tx:${hash}` as URI;
-        const nostrData = {
-          content: message,
-          tags: [["role", roleSettings.name]],
-        };
-        if (DRY_RUN) {
-          console.log("DRY RUN:Publishing to Nostr", txUri, nostrData);
-        } else {
-          await nostr?.publishMetadata(txUri, nostrData);
-        }
+          console.log(
+            `Burnt ${burnStatus.burntAmount.toString()} CHT for ${
+              user.user.username
+            }: ${hash}`
+          );
 
-        const discordMessage = `Burned ${burnStatus.burntAmount.toString()} CHT for <@${
-          user.user.id
-        }> for ${roleSettings.frequency} contribution for ${
-          roleSettings.name
-        } role ([tx](<${
-          community.explorer.url
-        }/tx/${hash}>)), new balance: ${newBalance} ${
-          community.primaryToken.symbol
-        } ([View account](<https://txinfo.xyz/celo/address/${cardAddress}>))`;
+          const txUri =
+            `ethereum:${community.primaryToken.chain_id}:tx:${hash}` as URI;
+          const nostrData = {
+            content: message,
+            tags: [["role", roleSettings.name]],
+          };
+          if (DRY_RUN) {
+            console.log("DRY RUN:Publishing to Nostr", txUri, nostrData);
+          } else {
+            await nostr?.publishMetadata(txUri, nostrData);
+          }
 
-        if (DRY_RUN) {
-          console.log("DRY RUN: Discord log", discordMessage);
-        } else {
-          await discordLog(discordMessage);
+          const discordMessage = `Burned ${burnStatus.burntAmount.toString()} CHT for <@${
+            user.user.id
+          }> for ${roleSettings.frequency} contribution for ${
+            roleSettings.name
+          } role ([tx](<${
+            community.explorer.url
+          }/tx/${hash}>)), new balance: ${newBalance} ${
+            community.primaryToken.symbol
+          } ([View account](<https://txinfo.xyz/celo/address/${cardAddress}>))`;
+
+          if (DRY_RUN) {
+            console.log("DRY RUN: Discord log", discordMessage);
+          } else {
+            await discordLog(discordMessage);
+          }
         }
       } catch (e) {
         console.error(
@@ -236,6 +295,16 @@ export const burn = async (
   }
 };
 
+/**
+ * For minting, we don't need to use the bundler. We can just mint the tokens directly to the user's account.
+ * @param roleSettings
+ * @param user
+ * @param community
+ * @param guild
+ * @param signer
+ * @param signerAccountAddress
+ * @returns
+ */
 export const mint = async (
   roleSettings: DiscordRoleSettings,
   user: GuildMember,
@@ -259,25 +328,67 @@ export const mint = async (
   if (mintStatus.status === "mint") {
     console.error(`${user} has already minted`);
   } else {
-    const bundler = new BundlerService(community);
-
     const balanceBigInt = await getAccountBalance(community, cardAddress);
     const balance =
       Number(balanceBigInt) / 10 ** community.primaryToken.decimals;
 
     const newBalance = balance + mintStatus.mintedAmount;
 
-    try {
-      const hash = DRY_RUN
-        ? "0x123"
-        : await bundler.mintERC20Token(
-            signer,
-            community.primaryToken.address,
-            signerAccountAddress,
-            cardAddress,
-            mintStatus.mintedAmount.toString(),
-            message
+    let hash: string;
+
+    if (DRY_RUN) {
+      hash = "0x123";
+    } else {
+      // Create provider and contract instance
+      const provider = new JsonRpcProvider(community.primaryRPCUrl);
+      const connectedSigner = signer.connect(provider);
+      // ERC20 ABI with mint function
+      const erc20Abi = [
+        "function mint(address to, uint256 amount) external",
+        "function balanceOf(address account) external view returns (uint256)",
+        "function decimals() external view returns (uint8)",
+        "function symbol() external view returns (string)",
+        "function name() external view returns (string)",
+      ];
+
+      const tokenContract = new Contract(
+        community.primaryToken.address,
+        erc20Abi,
+        connectedSigner
+      );
+
+      // Convert amount to proper decimals
+      const mintAmount = BigInt(
+        mintStatus.mintedAmount * 10 ** community.primaryToken.decimals
+      );
+      try {
+        // Call mint function directly
+        const tx = await tokenContract.mint(cardAddress, mintAmount);
+        hash = tx.hash;
+
+        // Wait for transaction to be mined
+        await tx.wait();
+      } catch (e) {
+        const hasMinterRole = await hasRole(
+          community.primaryToken.address,
+          MINTER_ROLE,
+          signerAccountAddress,
+          provider
+        );
+        if (!hasMinterRole) {
+          console.error(
+            `User ${user.user.username} does not have the minter role`
           );
+          return;
+        }
+        console.error(
+          `Failed to mint ${mintStatus.mintedAmount.toString()} CHT for ${
+            user.user.username
+          } (${e.message})`,
+          e
+        );
+      }
+
       console.log(`Minted hash: ${hash}`);
 
       const txUri =
@@ -304,13 +415,6 @@ export const mint = async (
       } else {
         await discordLog(discordMessage);
       }
-    } catch (e) {
-      console.error(
-        `Failed to mint ${mintStatus.mintedAmount.toString()} CHT for ${
-          user.user.username
-        } (${e.message})`,
-        e
-      );
     }
   }
 };
