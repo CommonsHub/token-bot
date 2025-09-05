@@ -18,7 +18,8 @@ import { handleBurnManyCommand } from "./commands/burn-many";
 import { handleDoCommand } from "./commands/do";
 import { handleBurnOrRevokeRoleCommand } from "./commands/burn-or-revoke-role";
 import { Wallet } from "ethers";
-import { getNativeBalance } from "./lib/blockchain";
+import { getNativeBalance, hasRole } from "./lib/blockchain";
+import { getCommunity } from "./cw";
 
 // Create a new client instance
 const client = new Client({
@@ -139,7 +140,14 @@ if (!privateKey) {
 const main = async () => {
   const signer = new Wallet(privateKey);
   const balance = await getNativeBalance(signer.address);
+  const community = getCommunity(process.env.COMMUNITY_SLUG);
+  const isMinter = await hasRole(
+    community.primaryToken.address,
+    "minter",
+    signer.address
+  );
   console.log(`Balance: ${balance} CELO`);
+  console.log(`Has minter role: ${isMinter}`);
 };
 
 main();

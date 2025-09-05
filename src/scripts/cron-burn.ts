@@ -11,7 +11,7 @@ import { getAccountAddress, getAccountBalance } from "@citizenwallet/sdk";
 import { getCommunity } from "../cw";
 import { Wallet } from "ethers";
 import { burn, DiscordRoleSettings, mint } from "../lib/token";
-import { getNativeBalance } from "../lib/blockchain";
+import { getNativeBalance, hasRole } from "../lib/blockchain";
 
 const roles: DiscordRoleSettings[] = [
   {
@@ -212,6 +212,13 @@ const main = async () => {
 
   const nativeBalance = await getNativeBalance(signer.address);
   console.log(`Native balance: ${nativeBalance} CELO`);
+
+  const hasMinterRole = await hasRole(
+    community.primaryToken.address,
+    "minter",
+    signer.address
+  );
+  console.log(`Has minter role: ${hasMinterRole}`);
 
   const signerAccountAddress = await getAccountAddress(
     community,
