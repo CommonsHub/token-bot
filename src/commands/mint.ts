@@ -1,6 +1,6 @@
-import { BundlerService, getAccountAddress } from "@citizenwallet/sdk";
+import { getAccountAddress } from "@citizenwallet/sdk";
 import { ChatInputCommandInteraction, Client } from "discord.js";
-import { Wallet } from "ethers";
+import { Wallet, Contract, JsonRpcProvider } from "ethers";
 import { getCommunity } from "../cw";
 import { createDiscordMention, isDiscordMention } from "../utils/address";
 import { ContentResponse, generateContent } from "../utils/content";
@@ -9,6 +9,7 @@ import { getAddressFromUserInputWithReplies } from "./conversion/address";
 import { MintTaskArgs } from "./do/tasks";
 import { Nostr, URI } from "../lib/nostr";
 import { discordLog } from "../lib/discord";
+import { hasRole, MINTER_ROLE } from "@citizenwallet/sdk";
 
 const nostr = Nostr.getInstance();
 
@@ -94,34 +95,40 @@ export const mintCommand = async (
 
     const signer = new Wallet(privateKey);
 
-    const signerAccountAddress = await getAccountAddress(
-      community,
-      signer.address
-    );
-    if (!signerAccountAddress) {
-      content.content.push("Could not find an account for you!");
-      await interaction.editReply({
-        content: generateContent(content),
-      });
-      continue;
-    }
-
     content.header = createProgressSteps(2, `${userIndex + 1}/${users.length}`);
     await interaction.editReply({
       content: generateContent(content),
     });
 
-    const bundler = new BundlerService(community);
-
     try {
-      const hash = await bundler.mintERC20Token(
-        signer,
+      // Create provider and contract instance
+      const provider = new JsonRpcProvider(community.primaryRPCUrl);
+      const connectedSigner = signer.connect(provider);
+
+      // ERC20 ABI with mint function
+      const erc20Abi = [
+        "function mint(address to, uint256 amount) external",
+        "function balanceOf(address account) external view returns (uint256)",
+        "function decimals() external view returns (uint8)",
+        "function symbol() external view returns (string)",
+        "function name() external view returns (string)",
+      ];
+
+      const tokenContract = new Contract(
         token.address,
-        signerAccountAddress,
-        receiverAddress,
-        amount.toString(),
-        message
+        erc20Abi,
+        connectedSigner
       );
+
+      // Convert amount to proper decimals
+      const mintAmount = BigInt(amount * 10 ** token.decimals);
+
+      // Call mint function directly
+      const tx = await tokenContract.mint(receiverAddress, mintAmount);
+      const hash = tx.hash;
+
+      // Wait for transaction to be mined
+      await tx.wait();
 
       content.header = createProgressSteps(
         3,
@@ -187,7 +194,25 @@ export const mintCommand = async (
       );
     } catch (error) {
       console.error("Failed to mint", error);
-      content.content.push("❌ Failed to mint");
+
+      // Check if the error is due to missing minter role
+      try {
+        const provider = new JsonRpcProvider(community.primaryRPCUrl);
+        const hasMinterRole = await hasRole(
+          token.address,
+          MINTER_ROLE,
+          signer.address,
+          provider
+        );
+        if (!hasMinterRole) {
+          content.content.push("❌ Bot does not have the minter role");
+        } else {
+          content.content.push("❌ Failed to mint");
+        }
+      } catch (roleError) {
+        content.content.push("❌ Failed to mint");
+      }
+
       await interaction.editReply({
         content: generateContent(content),
       });

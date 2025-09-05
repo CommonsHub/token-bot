@@ -17,6 +17,8 @@ import { handleShareAddressCommand } from "./commands/shareAddress";
 import { handleBurnManyCommand } from "./commands/burn-many";
 import { handleDoCommand } from "./commands/do";
 import { handleBurnOrRevokeRoleCommand } from "./commands/burn-or-revoke-role";
+import { Wallet } from "ethers";
+import { getNativeBalance } from "./lib/blockchain";
 
 // Create a new client instance
 const client = new Client({
@@ -127,6 +129,20 @@ const token = process.env.DISCORD_TOKEN;
 if (!token) throw new Error("DISCORD_TOKEN is not defined in .env file");
 
 client.login(token);
+
+const privateKey = process.env.BOT_PRIVATE_KEY;
+if (!privateKey) {
+  console.error("BOT_PRIVATE_KEY is not set");
+  process.exit(1);
+}
+
+const main = async () => {
+  const signer = new Wallet(privateKey);
+  const balance = await getNativeBalance(signer.address);
+  console.log(`Balance: ${balance} CELO`);
+};
+
+main();
 
 const app = express();
 const port = process.env.PORT || 3000;
